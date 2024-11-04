@@ -14,7 +14,7 @@ library(ggplot2)
 library(reticulate)
 
 
-#Lad Dataset
+#Load Dataset
 data <- read.csv("Desktop/ROBYN PROJECT/jiali/data_week_final.csv")
 ######################     EXPLORATORY DATA ANALYSIS     #######################   
 ######################                                   #######################
@@ -131,6 +131,7 @@ train_size <- floor(0.8 * nrow(data))
 train_ts_data <- ts_data[1:train_size]
 test_ts_data <- ts_data[126:length(ts_data)]
 
+#run model
 arima_model <- auto.arima(train_ts_data, max.q = 8, max.p = 2, seasonal = TRUE, stepwise = FALSE, approximation = FALSE)
 summary(arima_model)
 
@@ -184,7 +185,7 @@ exogenous_vars <- data.frame(
   tv_rating = data$tv_gross_rating_points
 )
 
-# Split exogenous variables into training and future (if forecasting)
+# Split exogenous variables into training and future
 exog_train <- exogenous_vars[1:length(train_ts_data), ]
 exog_future <- exogenous_vars[(length(train_ts_data) + 1):(length(train_ts_data) + forecast_horizon), ]
 
@@ -217,6 +218,7 @@ ggplot(results_arimax, aes(x = Date)) +
 
 summary(arimax_model)
 
+#perform valuation metrics
 actuals_arimax <- test_ts_data
 mae_ax <- mae(actuals_arimax, sales_forecast_exog$mean)
 rmse_ax <- rmse(actuals_arimax, sales_forecast_exog$mean)
@@ -234,7 +236,7 @@ str(data)
 training_set <- data[1:125,-c(4,17)]
 test_set = data[126:156,-c(4,17)]
 
-
+#run model
 regressor = lm(formula = sales ~ .,
                data = training_set)
 y_pred = predict(regressor, newdata = test_set)
@@ -262,6 +264,7 @@ ggplot(results, aes(x = Date)) +
   scale_color_manual("", values = c("Actual Sales" = "blue", "Predicted Sales" = "red")) +
   theme_minimal()
 
+#perform valuation metrics
 actuals_multiple_reg <- test_set$sales
 mae_ml <- mae(actuals_multiple_reg, y_pred)
 rmse_ml <- rmse(actuals_multiple_reg, y_pred)
@@ -326,7 +329,8 @@ InputCollect <- robyn_inputs(
   #rolling window
   window_start = '2021-01-01',
   window_end = '2022-04-30',
-  
+
+  #we allow for flexible decay
   adstock = 'weibull_cdf'
 )
 
@@ -397,7 +401,7 @@ OutputCollect <- robyn_outputs(
   pareto_fronts = "auto",
   # calibration_constraint = 0.1, # range c(0.01, 0.1) & default at 0.1
   csv_out = "pareto", # "pareto" or "all"
-  clusters = TRUE, # Set to TRUE to cluster similar models by ROAS. See ?robyn_clusters
+  clusters = TRUE, # Set to TRUE to cluster similar models by ROAS
   plot_pareto = TRUE, # Set to FALSE to deactivate plotting and saving model one-pagers
   plot_folder = robyn_directory # path for plots export
 )
@@ -409,29 +413,12 @@ OutputCollect$allSolutions
 select_model <- "4_391_6"
 
 ExportedModelOld <- robyn_write( 
-  robyn_directory = robyn_directory, # model object location and name
-  select_model = select_model, # selected model ID
-  InputCollect = InputCollect, # all model input
-  OutputCollect = OutputCollect, # all model output
+  robyn_directory = robyn_directory, 
+  select_model = select_model, 
+  InputCollect = InputCollect, 
+  OutputCollect = OutputCollect,
   export = create_files
 )
-
-data_refresh<-data[data$date >= '2021-01-03' & data$date <= '2022-07-01',]
-
-RobynRefresh <- robyn_refresh(
-  robyn_directory = robyn_directory,
-  dt_input = data_refresh,
-  dt_holidays = dt_prophet_holidays,
-  refresh_steps = 9,
-  refresh_mode= 'auto',
-  refresh_iters = 1000, # 1k is an estimation
-  refresh_trials = 3,
-  clusters=TRUE
-)
-
-print(ExportedModelOld)
-
-myOnePager <- robyn_onepagers(InputCollect, OutputCollect, select_model, export = create_files)
 
 #BUDGET ALLOCATION BASED ON THE SELECTED MODEL
 AllocatorCollect1 <- robyn_allocator(
@@ -454,7 +441,7 @@ AllocatorCollect2 <- robyn_allocator(
   scenario = "max_response",
   channel_constr_low = c(0.5, 0.8, 0.5,0.8, 0.8, 0.8),
   channel_constr_up = c(1.1, 1.5, 1.1, 1.4, 1.6, 1.7),
-  expected_spend = 6590449, # Total spend to be simulated
+  expected_spend = 6590449, # Total spend to be simulated (actual)
   expected_spend_days = 120, # Duration of expected_spend in days
   export = create_files
 )
@@ -465,9 +452,9 @@ AllocatorCollect3 <- robyn_allocator(
   InputCollect = InputCollect,
   OutputCollect = OutputCollect,
   select_model = select_model,
-  date_range = NULL, # Default last month as initial period
+  date_range = NULL, 
   scenario = "target_efficiency",
-  target_value = 1, # Customize target ROAS or CPA value
+  target_value = 1, 
   export = create_files
 )
 print(AllocatorCollect3)
