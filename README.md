@@ -20,13 +20,14 @@ When running an MMM study, there are multiple steps involved.
 **1) Define business questions and scope**
 **2) Data collection**
    - There are multiple factors that need to be considered when it comes to data collection:
-     -- *Actual vs Panel Data*
-     -- *Dependent vs Independent Variables*
-     -- *Typology of metrics*
-     -- *Paid vs Organic activity*
-     -- *Seasonality*
-     -- *Macroeconomic factors*
-     -- *Granularity*
+     - *Actual vs Panel Data*
+     - *Dependent vs Independent Variables*
+     - *Typology of metrics*
+     - *Paid vs Organic activity*
+     - *Seasonality*
+     - *Macroeconomic factors*
+     - *Granularity*
+     
 **3) Data review**
 **4) Feature Engineering**
 **5) Modeling**
